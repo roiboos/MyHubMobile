@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "239446978021",
+    "firebase_url": "https://myhub-e496a.firebaseio.com",
+    "project_id": "myhub-e496a",
+    "storage_bucket": "myhub-e496a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239446978021:android:7d7392a224a4b71c",
+        "android_client_info": {
+          "package_name": "smarthome.petersen.com.myhub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "239446978021-52udv32ug7s9qqp4pi118pqon4n3uoe4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "smarthome.petersen.com.myhub",
+            "certificate_hash": "316b2af6b4b2ab03aec75aa049f1362599db4dd0"
+          }
+        },
+        {
+          "client_id": "239446978021-340rb2gkqf8h05t57onp5dhdc3hbg3li.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "239446978021-3cjmmofuf3vc7vvvtkrihi3hnred6bcv.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "239446978021-af63hskptr65btlkflgq90oqrhmcp45m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHo_iL9Jw_9pbvV9aGngPAsJw3YiH0wTo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "239446978021-340rb2gkqf8h05t57onp5dhdc3hbg3li.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
