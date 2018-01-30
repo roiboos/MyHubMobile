@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -48,23 +49,35 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        Button signOutButton = findViewById(R.id.btnSignOut);
+        signOutButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                mAuth.signOut();
+                mGoogleSignInClient.signOut();
+                updateUI(null);
+            }
+        });
+
         if(account == null)
         {
             // Configure sign-in to request the user's ID, email address, and basic
             // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build();
             // Build a GoogleSignInClient with the options specified by gso.
-            mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
             // Set the dimensions of the sign-in button.
-            SignInButton signInButton = findViewById(R.id.sign_in_button);
+            SignInButton signInButton = findViewById(R.id.btnSignIn);
             signInButton.setSize(SignInButton.SIZE_STANDARD);
             signInButton.setOnClickListener(new View.OnClickListener()
             {
@@ -89,31 +102,22 @@ public class MainActivity extends Activity
 
     private void updateUI(GoogleSignInAccount account)
     {
-        SignInButton signInButton = findViewById(R.id.sign_in_button);
-        signInButton.setVisibility(View.GONE);
+        SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
-        welcomeView.setText("Welcome " + account.getDisplayName());
-        welcomeView.setVisibility(View.VISIBLE);
-
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference ref = database.getReference("sensors");
-        ref.addValueEventListener(new ValueEventListener()
+        Button signOutButton = findViewById(R.id.btnSignOut);
+        if(account != null)
         {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot)
-            {
-//                String value = dataSnapshot.getValue(String.class);
-                Log.d("MainActivity", "Value is: " + dataSnapshot.getValue().toString());
-                Log.d("MainActivity", "Key is: " + dataSnapshot.getKey().toString());
-                Log.d("MainActivity", "Snapshot is: " + dataSnapshot.toString());
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError)
-            {
-
-            }
-        });
+            signInButton.setVisibility(View.GONE);
+            welcomeView.setText("Welcome " + account.getDisplayName());
+            welcomeView.setVisibility(View.VISIBLE);
+            signOutButton.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            signInButton.setVisibility(View.VISIBLE);
+            welcomeView.setVisibility(View.GONE);
+            signOutButton.setVisibility(View.GONE);
+        }
     }
 
     private void signIn()
