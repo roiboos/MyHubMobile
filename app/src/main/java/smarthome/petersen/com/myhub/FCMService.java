@@ -58,13 +58,33 @@ public class FCMService extends FirebaseInstanceIdService
                             {
                                 user.registration_ids = new ArrayList<String>();
                             }
-                            user.registration_ids.add(refreshedToken);
+
+                            if(!user.registration_ids.contains(refreshedToken))
+                            {
+                                user.registration_ids.add(refreshedToken);
+                            }
                             Map<String, Object> userValues = user.toMap();
                             refUsers.updateChildren(userValues);
                             refUsers.removeEventListener(this);
 
-                            DatabaseReference refRegIds = database.getReference("registration_ids");
-                            refRegIds.push().setValue(refreshedToken);
+                            final DatabaseReference refRegIds = database.getReference("registration_ids");
+                            refRegIds.orderByValue().equalTo(refreshedToken).addListenerForSingleValueEvent(new ValueEventListener()
+                            {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot)
+                                {
+                                    if(dataSnapshot.getChildrenCount() == 0)
+                                    {
+                                        refRegIds.push().setValue(refreshedToken);
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError)
+                                {
+
+                                }
+                            });
                         }
                     }
 
