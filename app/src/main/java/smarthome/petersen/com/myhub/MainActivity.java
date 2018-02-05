@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -30,24 +32,40 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import net.danlew.android.joda.JodaTimeAndroid;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import smarthome.petersen.com.myhub.adapters.SensorRecyclerAdapter;
+import smarthome.petersen.com.myhub.dataaccess.DataAccess;
+import smarthome.petersen.com.myhub.dataaccess.DataAccess.OnSensorsReceivedListener;
+import smarthome.petersen.com.myhub.datamodel.Sensor;
+import smarthome.petersen.com.myhub.datamodel.User;
 
 /**
  * Created by mull12 on 24.01.2018.
  */
 
-public class MainActivity extends Activity
+public class MainActivity extends Activity implements OnSensorsReceivedListener
 {
     private GoogleSignInClient mGoogleSignInClient;
+    GoogleSignInAccount mAccount;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        JodaTimeAndroid.init(this);
+
+        RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
+        LinearLayoutManager llmSensors = new LinearLayoutManager(this);
+        recyclerViewSensors.setLayoutManager(llmSensors);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -70,7 +88,7 @@ public class MainActivity extends Activity
             }
         });
 
-        if(account == null)
+        if (account == null)
         {
             // Configure sign-in to request the user's ID, email address, and basic
             // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
@@ -87,14 +105,27 @@ public class MainActivity extends Activity
                     signIn();
                 }
             });
-        }
-        else if (user == null)
+        } else if (user == null)
         {
             handleFirebaseSignIn(account);
-        }
-        else
+        } else
         {
             updateUI(account);
+        }
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        loadSensors();
+    }
+
+    private void loadSensors()
+    {
+        if (mAccount != null)
+        {
+            DataAccess.getSensors(this);
         }
     }
 
@@ -105,18 +136,25 @@ public class MainActivity extends Activity
         SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
         Button signOutButton = findViewById(R.id.btnSignOut);
-        if(account != null)
+        View sensorsList = findViewById(R.id.recyclerViewSensors);
+        if (account != null)
         {
+            mAccount = account;
             signInButton.setVisibility(View.GONE);
             welcomeView.setText("Welcome " + account.getDisplayName());
             welcomeView.setVisibility(View.VISIBLE);
+            sensorsList.setVisibility(View.VISIBLE);
             signOutButton.setVisibility(View.VISIBLE);
-        }
-        else
+            loadSensors();
+            DataAccess.unsubscribe();
+            DataAccess.subscribe(this);
+        } else
         {
+            mAccount = null;
             signInButton.setVisibility(View.VISIBLE);
             welcomeView.setVisibility(View.GONE);
             signOutButton.setVisibility(View.GONE);
+            sensorsList.setVisibility(View.GONE);
         }
     }
 
@@ -127,11 +165,13 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == 123) {
+        if (requestCode == 123)
+        {
             // The Task returned from this call is always completed, no need to attach
             // a listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -141,11 +181,14 @@ public class MainActivity extends Activity
 
     private void handleSignInResult(Task<GoogleSignInAccount> task)
     {
-        try {
+        try
+        {
             GoogleSignInAccount account = task.getResult(ApiException.class);
             updateUI(account);
             handleFirebaseSignIn(account);
-        } catch (ApiException e) {
+        }
+        catch (ApiException e)
+        {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Log.w("MainActivity", "signInResult:failed code=" + e.getStatusCode());
@@ -157,10 +200,13 @@ public class MainActivity extends Activity
     {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>()
+                {
                     @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
+                    public void onComplete(@NonNull Task<AuthResult> task)
+                    {
+                        if (task.isSuccessful())
+                        {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d("MainActivity", "signInWithCredential:success");
                             FirebaseUser firebaseUser = mAuth.getCurrentUser();
@@ -173,7 +219,8 @@ public class MainActivity extends Activity
                             ref.updateChildren(userValues);
                             String registrationToken = FirebaseInstanceId.getInstance().getToken();
                             FCMService.sendRegistrationToServer(registrationToken);
-                        } else {
+                        } else
+                        {
                             // If sign in fails, display a message to the user.
                             Log.w("MainActivity", "signInWithCredential:failure", task.getException());
                         }
@@ -184,6 +231,15 @@ public class MainActivity extends Activity
     @Override
     protected void onDestroy()
     {
+        DataAccess.unsubscribe();
         super.onDestroy();
+    }
+
+    @Override
+    public void onSensorsReceived(List<Sensor> sensors)
+    {
+        RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
+        SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
+        recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
     }
 }

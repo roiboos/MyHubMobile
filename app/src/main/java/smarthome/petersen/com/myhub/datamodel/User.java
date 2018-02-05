@@ -1,4 +1,4 @@
-package smarthome.petersen.com.myhub;
+package smarthome.petersen.com.myhub.datamodel;
 
 import com.google.firebase.database.IgnoreExtraProperties;
 

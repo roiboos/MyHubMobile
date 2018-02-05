@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import smarthome.petersen.com.myhub.datamodel.User;
+
 /**
  * Created by mull12 on 25.01.2018.
  */
