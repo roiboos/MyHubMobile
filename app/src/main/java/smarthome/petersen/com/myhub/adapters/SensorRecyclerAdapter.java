@@ -2,6 +2,7 @@ package smarthome.petersen.com.myhub.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -101,6 +102,14 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
         {
             super(itemView);
 
+            itemView.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+
+                }
+            });
             textViewSensorName = (TextView) itemView.findViewById(R.id.textViewSensorName);
             textViewSensorState = (TextView) itemView.findViewById(R.id.textViewSensorState);
         }

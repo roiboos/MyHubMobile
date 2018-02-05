@@ -36,6 +36,7 @@ public class DataAccess
 
     public static void subscribe(final OnSensorsReceivedListener onSensorsReceivedListener)
     {
+        unsubscribe();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         _sensorsRef = database.getReference("sensors");
         _childEventListener = _sensorsRef.orderByValue().addChildEventListener(new ChildEventListener()

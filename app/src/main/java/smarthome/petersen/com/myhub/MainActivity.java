@@ -61,8 +61,6 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        JodaTimeAndroid.init(this);
-
         RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
         LinearLayoutManager llmSensors = new LinearLayoutManager(this);
         recyclerViewSensors.setLayoutManager(llmSensors);
@@ -146,7 +144,6 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
             sensorsList.setVisibility(View.VISIBLE);
             signOutButton.setVisibility(View.VISIBLE);
             loadSensors();
-            DataAccess.unsubscribe();
             DataAccess.subscribe(this);
         } else
         {
