@@ -14,7 +14,7 @@ public class AlarmReceiver extends BroadcastReceiver
     public void onReceive(Context context, Intent intent) {
         String id = intent.getStringExtra("key");
         String sensorName = intent.getStringExtra("sensorName");
-        int duration = 1;
+        int duration = 10;
         String notificationText = String.format(context.getString(R.string.ias_warning_encore_text), sensorName, duration);
         Global.notifyUser(context, context.getString(R.string.ias_warning), notificationText);
         AlarmManagerManager.cancelAlarm(context, id);

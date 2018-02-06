@@ -93,7 +93,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService
 
         alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime() +
-                        10 * 1000, alarmIntent);
+                        10 * 60 * 1000, alarmIntent);
 
         AlarmManagerManager.addAlarmManager(getApplicationContext(), id, alarmIntent);
     }
