@@ -12,11 +12,29 @@ import net.danlew.android.joda.JodaTimeAndroid;
 
 public class MyHubApp extends Application
 {
+    private static MyHubApp _instance;
+
+    public MyHubApp()
+    {
+        _instance = this;
+    }
+
     @Override
     public void onCreate()
     {
         super.onCreate();
         LeakCanary.install(this);
         JodaTimeAndroid.init(this);
+    }
+
+    @Override
+    public void onTerminate()
+    {
+        super.onTerminate();
+    }
+
+    public static MyHubApp getContext()
+    {
+        return _instance;
     }
 }

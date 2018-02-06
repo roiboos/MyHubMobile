@@ -1,7 +1,11 @@
 package smarthome.petersen.com.myhub;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -60,6 +64,15 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            CharSequence name = getString(R.string.channel_name);// The user-visible name of the channel.
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(Global.NOTIFICATION_CHANNEL_ID, name, importance);
+            notificationManager.createNotificationChannel(channel);
+        }
 
         RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
         LinearLayoutManager llmSensors = new LinearLayoutManager(this);
