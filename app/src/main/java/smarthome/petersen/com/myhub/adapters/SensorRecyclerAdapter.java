@@ -72,7 +72,7 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
                 DateTime dateTime = formatterIn.parseDateTime(sensor.state.lastupdated);
                 sensorState = dateTime.withZone(DateTimeZone.getDefault()).toString("dd.MM.yyyy HH:mm:ss");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 sensorState = sensor.state.lastupdated;
             }

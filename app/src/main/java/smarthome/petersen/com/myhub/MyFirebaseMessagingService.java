@@ -5,6 +5,10 @@ import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONObject;
+
+import smarthome.petersen.com.myhub.datamodel.Sensor;
+
 public class MyFirebaseMessagingService extends FirebaseMessagingService
 {
     private static final String TAG = "MyFirebaseService";
@@ -16,13 +20,25 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage)
     {
-        // TODO(developer): Handle FCM messages here.
-        // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
-        Log.d(TAG, "From: " + remoteMessage.getFrom());
-
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+
+            try
+            {
+                for (String key : remoteMessage.getData().keySet())
+                {
+                    JSONObject jsonObjectSensor = new JSONObject(remoteMessage.getData().get(key));
+                    if(Sensor.SENSOR_TYPE_OPENCLOSE.equalsIgnoreCase(jsonObjectSensor.getString("type")))
+                    {
+                        JSONObject jsonObjectSensorState = jsonObjectSensor.getJSONObject("state");
+                        Log.d("MyHub", jsonObjectSensorState.getBoolean("open") ? "Open" : "Closed");
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                Log.e("MyHub", Global.getExceptionString(ex));
+            }
 
 //            if (
 // Check if data needs to be processed by long running job
