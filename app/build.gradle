@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'io.fabric'
+
 android {
     compileSdkVersion 26
     defaultConfig {
@@ -35,6 +37,10 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:11.8.0'
     implementation 'com.google.firebase:firebase-messaging:11.8.0'
     implementation 'net.danlew:android.joda:2.9.9'
+    compile('com.crashlytics.sdk.android:crashlytics:2.9.0@aar') {
+        transitive = true
+    }
+    compile 'com.google.firebase:firebase-core:11.8.0'
     debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
     testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'

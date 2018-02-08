@@ -64,13 +64,15 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
 
         String sensorState = "Unknown";
 
+        DateTimeFormatter formatterIn = ISODateTimeFormat.dateTimeParser().withZone(DateTimeZone.forID("UTC")); //.withZone(DateTimeZone.getDefault());
+        DateTime lastupdated = formatterIn.parseDateTime(sensor.state.lastupdated);
+        String lastupdatedString = lastupdated.withZone(DateTimeZone.getDefault()).toString("dd.MM.yyyy HH:mm:ss");
+
         if(Sensor.SENSOR_TYPE_MOTION.equalsIgnoreCase(sensor.type))
         {
             try
             {
-                DateTimeFormatter formatterIn = ISODateTimeFormat.dateTimeParser().withZone(DateTimeZone.forID("UTC")); //.withZone(DateTimeZone.getDefault());
-                DateTime dateTime = formatterIn.parseDateTime(sensor.state.lastupdated);
-                sensorState = dateTime.withZone(DateTimeZone.getDefault()).toString("dd.MM.yyyy HH:mm:ss");
+                sensorState = lastupdatedString;
             }
             catch (Exception ex)
             {
@@ -79,7 +81,14 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
         }
         else if(Sensor.SENSOR_TYPE_OPENCLOSE.equalsIgnoreCase(sensor.type))
         {
-            sensorState = sensor.state.open ? "Offen" : "Geschlossen";
+            if(lastupdated.year().get() < 2000)
+            {
+                sensorState = "Unknown";
+            }
+            else
+            {
+                sensorState = sensor.state.open ? "Offen" : "Geschlossen";
+            }
         }
 
         int standardColor = holder.textViewSensorName.getCurrentTextColor();
