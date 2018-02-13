@@ -1,4 +1,4 @@
-package smarthome.petersen.com.myhub;
+package smarthome.petersen.com.myhub.services;
 
 import android.util.Log;
 

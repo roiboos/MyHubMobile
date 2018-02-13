@@ -4,4 +4,5 @@
     <string name="ias_warning">IAS Alarm</string>
     <string name="ias_warning_text">Fenster %s wurde geöffnet</string>
     <string name="ias_warning_encore_text">Fenster %s seit %d Minuten geöffnet</string>
+    <string name="athome">Zuhause</string>
 </resources>

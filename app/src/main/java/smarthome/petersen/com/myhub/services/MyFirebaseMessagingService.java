@@ -1,12 +1,9 @@
-package smarthome.petersen.com.myhub;
+package smarthome.petersen.com.myhub.services;
 
 import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -15,6 +12,11 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONObject;
 
+import smarthome.petersen.com.myhub.AlarmManagerManager;
+import smarthome.petersen.com.myhub.receiver.AlarmReceiver;
+import smarthome.petersen.com.myhub.Global;
+import smarthome.petersen.com.myhub.MyHubApp;
+import smarthome.petersen.com.myhub.R;
 import smarthome.petersen.com.myhub.datamodel.Sensor;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="smarthome.petersen.com.myhub">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
     <application
         android:name=".MyHubApp"
         android:allowBackup="true"
@@ -18,19 +20,25 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".FCMService">
+        <service android:name=".services.FCMService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
         <service
-            android:name=".MyFirebaseMessagingService">
+            android:name=".services.MyFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
-        <receiver android:name=".AlarmReceiver">
+        <service android:name=".services.GeofenceTransitionsIntentService"/>
+        <receiver android:name=".receiver.AlarmReceiver">
 
+        </receiver>
+        <receiver android:name=".receiver.GeofenceTransitionReceiver" android:exported="true">
+            <!--<intent-filter>-->
+                <!--<action android:name="MyHub.ACTION_RECEIVE_GEOFENCE" />-->
+            <!--</intent-filter>-->
         </receiver>
 
     </application>

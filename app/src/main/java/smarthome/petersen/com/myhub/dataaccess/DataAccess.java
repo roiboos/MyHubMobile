@@ -7,8 +7,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import smarthome.petersen.com.myhub.datamodel.Sensor;
 
@@ -18,28 +23,51 @@ import smarthome.petersen.com.myhub.datamodel.Sensor;
 
 public class DataAccess
 {
-    private static ChildEventListener _childEventListener;
+    private static ChildEventListener _childEventListenerSensors;
     private static DatabaseReference _sensorsRef;
+
+    private static ChildEventListener _childEventListenerUsers;
+    private static DatabaseReference _usersRef;
+
 
     public interface OnSensorsReceivedListener
     {
         void onSensorsReceived(List<Sensor> sensors);
     }
 
-    public static void unsubscribe()
+    public interface OnAtHomeChangedListener
     {
-        if(_sensorsRef != null && _childEventListener != null)
+        void onAtHomeChanged(boolean atHome);
+    }
+
+    private static void unsubscribeSensors()
+    {
+        if(_sensorsRef != null && _childEventListenerSensors != null)
         {
-            _sensorsRef.removeEventListener(_childEventListener);
+            _sensorsRef.removeEventListener(_childEventListenerSensors);
         }
     }
 
-    public static void subscribe(final OnSensorsReceivedListener onSensorsReceivedListener)
+    private static void unsubscribeUsers()
     {
-        unsubscribe();
+        if(_usersRef != null && _childEventListenerUsers != null)
+        {
+            _usersRef.removeEventListener(_childEventListenerUsers);
+        }
+    }
+
+    public static void unsubscribe()
+    {
+        unsubscribeSensors();
+        unsubscribeUsers();
+    }
+
+    public static void subscribeSensors(final OnSensorsReceivedListener onSensorsReceivedListener)
+    {
+        unsubscribeSensors();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         _sensorsRef = database.getReference("sensors");
-        _childEventListener = _sensorsRef.orderByValue().addChildEventListener(new ChildEventListener()
+        _childEventListenerSensors = _sensorsRef.orderByValue().addChildEventListener(new ChildEventListener()
         {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s)
@@ -73,8 +101,11 @@ public class DataAccess
         });
     }
 
-    public static void getSensors(final OnSensorsReceivedListener onSensorsReceivedListener)
+    private static OnSensorsReceivedListener _onSensorsReceivedListener = null;
+
+    public static void getSensors(OnSensorsReceivedListener onSensorsReceivedListener)
     {
+        _onSensorsReceivedListener = onSensorsReceivedListener;
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("sensors");
         ref.addListenerForSingleValueEvent(new ValueEventListener()
@@ -94,9 +125,10 @@ public class DataAccess
                     }
                 }
 
-                if(onSensorsReceivedListener != null)
+                if(_onSensorsReceivedListener != null)
                 {
-                    onSensorsReceivedListener.onSensorsReceived(sensors);
+                    _onSensorsReceivedListener.onSensorsReceived(sensors);
+                    _onSensorsReceivedListener = null;
                 }
             }
 
@@ -106,5 +138,82 @@ public class DataAccess
 
             }
         });
+    }
+
+    public static void subscribeUsersAtHome(final OnAtHomeChangedListener onAtHomeChangedListener, final String userid)
+    {
+        unsubscribeUsers();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        _usersRef = database.getReference("users");
+        _childEventListenerSensors = _usersRef.orderByValue().addChildEventListener(new ChildEventListener()
+        {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s)
+            {
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s)
+            {
+                getAtHome(onAtHomeChangedListener, userid);
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot)
+            {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s)
+            {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError)
+            {
+
+            }
+        });
+    }
+
+    public static boolean getAtHome(final OnAtHomeChangedListener onAtHomeChangedListener, String userid)
+    {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("users/" + userid + "/athome");
+        ref.addListenerForSingleValueEvent(new ValueEventListener()
+        {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot)
+            {
+                if(dataSnapshot.getValue() != null)
+                {
+                    boolean atHome = (boolean) dataSnapshot.getValue();
+                    if (onAtHomeChangedListener != null)
+                    {
+                        onAtHomeChangedListener.onAtHomeChanged(atHome);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError)
+            {
+
+            }
+        });
+
+        return false;
+    }
+
+    public static void setAtHome(boolean atHome, String userid) throws JSONException
+    {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("users/" + userid);
+        Map<String, Object> updates = new HashMap<String, Object>();
+        updates.put("athome", atHome);
+        ref.updateChildren(updates);
     }
 }

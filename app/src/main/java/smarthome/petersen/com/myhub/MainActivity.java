@@ -1,14 +1,18 @@
 package smarthome.petersen.com.myhub;
 
-import android.app.Activity;
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -16,49 +20,60 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 
-import net.danlew.android.joda.JodaTimeAndroid;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import smarthome.petersen.com.myhub.adapters.SensorRecyclerAdapter;
 import smarthome.petersen.com.myhub.dataaccess.DataAccess;
+import smarthome.petersen.com.myhub.dataaccess.DataAccess.OnAtHomeChangedListener;
 import smarthome.petersen.com.myhub.dataaccess.DataAccess.OnSensorsReceivedListener;
 import smarthome.petersen.com.myhub.datamodel.Sensor;
 import smarthome.petersen.com.myhub.datamodel.User;
+import smarthome.petersen.com.myhub.receiver.GeofenceTransitionReceiver;
+import smarthome.petersen.com.myhub.services.FCMService;
+import smarthome.petersen.com.myhub.services.GeofenceTransitionsIntentService;
 
 /**
  * Created by mull12 on 24.01.2018.
  */
 
-public class MainActivity extends Activity implements OnSensorsReceivedListener
+public class MainActivity extends AppCompatActivity implements OnSensorsReceivedListener, OnAtHomeChangedListener
 {
+    private static final double LONGITUDE_HOME = 12.183270;
+    private static final double LATITUDE_HOME = 49.032820;
+//    private static final double LONGITUDE_HOME = 12.148570;
+//    private static final double LATITUDE_HOME = 49.012123;
+
+
     private GoogleSignInClient mGoogleSignInClient;
-    GoogleSignInAccount mAccount;
+    private GoogleSignInAccount mAccount;
+    private GeofencingClient mGeofencingClient;
+    private List<Geofence> mGeofenceList;
+    private PendingIntent mGeofencePendingIntent;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState)
@@ -86,6 +101,18 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null)
+        {
+            Global.setCurrentUserid(mAuth.getUid());
+            try
+            {
+                DataAccess.setAtHome(false, mAuth.getUid());
+            }
+            catch (Exception ex)
+            {
+                Log.e("MainActivity", Global.getExceptionString(ex));
+            }
+        }
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         Button signOutButton = findViewById(R.id.btnSignOut);
@@ -95,6 +122,7 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
             public void onClick(View view)
             {
                 mAuth.signOut();
+                Global.setCurrentUserid(null);
                 mGoogleSignInClient.signOut();
                 updateUI(null);
             }
@@ -126,6 +154,111 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
         }
     }
 
+    private void initGeoFence()
+    {
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
+
+        mGeofencingClient.removeGeofences(getGeofencePendingIntent())
+                .addOnSuccessListener(this, new OnSuccessListener<Void>()
+                {
+                    @Override
+                    public void onSuccess(Void aVoid)
+                    {
+                        Log.d("MainActivity", "Geofence removed");
+                        mGeofenceList = new ArrayList<Geofence>();
+                        mGeofenceList.add(new Geofence.Builder()
+                                // Set the request ID of the geofence. This is a string to identify this
+                                // geofence.
+                                .setRequestId(Global.HOME)
+
+                                .setCircularRegion(
+                                        LATITUDE_HOME,
+                                        LONGITUDE_HOME,
+                                        100
+                                )
+                                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                                .build());
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        {
+                            if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                            {
+                                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                                return;
+                            }
+                        }
+
+                        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                                .addOnSuccessListener(MainActivity.this, new OnSuccessListener<Void>()
+                                {
+                                    @Override
+                                    public void onSuccess(Void aVoid)
+                                    {
+                                        Log.d("MainActivity", "Geofence added");
+                                    }
+                                })
+                                .addOnFailureListener(MainActivity.this, new OnFailureListener()
+                                {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e)
+                                    {
+                                        Log.e("MainActivity", Global.getExceptionString(e));
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener()
+                {
+                    @Override
+                    public void onFailure(@NonNull Exception e)
+                    {
+                        Log.e("MainActivity", Global.getExceptionString(e));
+                    }
+                });
+    }
+
+    private GeofencingRequest getGeofencingRequest()
+    {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER | GeofencingRequest.INITIAL_TRIGGER_EXIT);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
+    }
+
+    private PendingIntent getGeofencePendingIntent()
+    {
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null)
+        {
+            return mGeofencePendingIntent;
+        }
+
+        Intent intent = new Intent(getApplicationContext(), GeofenceTransitionReceiver.class);
+
+        mGeofencePendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+//        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+//        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
+//        // calling addGeofences() and removeGeofences().
+//        mGeofencePendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.
+//                FLAG_UPDATE_CURRENT);
+        return mGeofencePendingIntent;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        if (requestCode == 1)
+        {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                initGeoFence();
+            }
+        }
+    }
+
     @Override
     protected void onResume()
     {
@@ -147,24 +280,25 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
     {
         SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
-        Button signOutButton = findViewById(R.id.btnSignOut);
+        View headerView = findViewById(R.id.flHeader);
         View sensorsList = findViewById(R.id.recyclerViewSensors);
         if (account != null)
         {
             mAccount = account;
             signInButton.setVisibility(View.GONE);
             welcomeView.setText("Welcome " + account.getDisplayName());
-            welcomeView.setVisibility(View.VISIBLE);
+            headerView.setVisibility(View.VISIBLE);
             sensorsList.setVisibility(View.VISIBLE);
-            signOutButton.setVisibility(View.VISIBLE);
             loadSensors();
-            DataAccess.subscribe(this);
+            initGeoFence();
+            DataAccess.subscribeSensors(this);
+            if (mAuth != null && mAuth.getUid() != null)
+                DataAccess.subscribeUsersAtHome(this, mAuth.getUid());
         } else
         {
             mAccount = null;
             signInButton.setVisibility(View.VISIBLE);
-            welcomeView.setVisibility(View.GONE);
-            signOutButton.setVisibility(View.GONE);
+            headerView.setVisibility(View.GONE);
             sensorsList.setVisibility(View.GONE);
         }
     }
@@ -252,5 +386,20 @@ public class MainActivity extends Activity implements OnSensorsReceivedListener
         RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
         SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
         recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
+    }
+
+    @Override
+    public void onAtHomeChanged(boolean atHome)
+    {
+        TextView atHomeView = findViewById(R.id.textViewAtHome);
+        if (atHome)
+        {
+            atHomeView.setText(R.string.athome);
+            atHomeView.setVisibility(View.VISIBLE);
+        } else
+        {
+            atHomeView.setText("");
+            atHomeView.setVisibility(View.GONE);
+        }
     }
 }

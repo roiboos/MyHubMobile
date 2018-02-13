@@ -5,7 +5,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
 import java.io.PrintWriter;
@@ -19,7 +21,46 @@ import java.io.Writer;
 public class Global
 {
     public static final String NOTIFICATION_CHANNEL_ID = "MyHub";
+    public static final String HOME = "HOME";
     public static int i = 0;
+
+    private static SharedPreferences _sharedPreferences;
+
+    // Safer to check if _sharedPreferences has not been discarded by an overly
+    // eager garbage collector
+    public static SharedPreferences getSharedPreferences()
+    {
+        if (_sharedPreferences == null)
+        {
+            _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MyHubApp.getContext());
+        }
+
+        return _sharedPreferences;
+    }
+
+    public static boolean isAtHome()
+    {
+        return getSharedPreferences().getBoolean("athome", false);
+    }
+
+    public static String getCurrentUserid()
+    {
+        return getSharedPreferences().getString("userid", null);
+    }
+
+    public static void setCurrentUserid(String userid)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString("userid", userid);
+        editor.commit();
+    }
+    
+    public void setAtHome(boolean value)
+    {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean("athome", value);
+        editor.commit();
+    }
 
     public static void notifyUser(Context context, String notificationCaption, String notificationText)
     {
