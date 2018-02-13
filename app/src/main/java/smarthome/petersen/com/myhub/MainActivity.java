@@ -4,6 +4,9 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -39,6 +42,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -56,6 +60,7 @@ import smarthome.petersen.com.myhub.datamodel.User;
 import smarthome.petersen.com.myhub.receiver.GeofenceTransitionReceiver;
 import smarthome.petersen.com.myhub.services.FCMService;
 import smarthome.petersen.com.myhub.services.GeofenceTransitionsIntentService;
+import smarthome.petersen.com.myhub.viewmodels.MyHubViewModel;
 
 /**
  * Created by mull12 on 24.01.2018.
@@ -263,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
     protected void onResume()
     {
         super.onResume();
-        loadSensors();
+        //loadSensors();
     }
 
     private void loadSensors()
@@ -278,6 +283,49 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
 
     private void updateUI(GoogleSignInAccount account)
     {
+        MyHubViewModel viewModel = ViewModelProviders.of(this).get(MyHubViewModel.class);
+        LiveData<DataSnapshot> liveData = viewModel.getDataSnapshotLiveData();
+
+        liveData.observe(this, new Observer<DataSnapshot>()
+        {
+            @Override
+            public void onChanged(@Nullable DataSnapshot dataSnapshot)
+            {
+                if (dataSnapshot != null)
+                {
+                    final List<Sensor> sensors = new ArrayList<>();
+
+                    if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0)
+                    {
+                        for (DataSnapshot sensorSnapshot : dataSnapshot.getChildren())
+                        {
+                            Sensor sensor = sensorSnapshot.getValue(Sensor.class);
+                            sensor.id = sensorSnapshot.getKey();
+                            sensors.add(sensor);
+                        }
+
+                        RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
+                        SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
+                        recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
+                    }
+                }
+            }
+        });
+//        model.getSensors().observe(this, new Observer<List<Sensor>>()
+//        {
+//            @Override
+//            public void onChanged(@Nullable List<Sensor> sensors)
+//            {
+//                if(sensors == null)
+//                {
+//                    return;
+//                }
+//                RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
+//                SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
+//                recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
+//            }
+//        });
+
         SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
         View headerView = findViewById(R.id.flHeader);
@@ -289,9 +337,9 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
             welcomeView.setText("Welcome " + account.getDisplayName());
             headerView.setVisibility(View.VISIBLE);
             sensorsList.setVisibility(View.VISIBLE);
-            loadSensors();
+            //loadSensors();
             initGeoFence();
-            DataAccess.subscribeSensors(this);
+//            DataAccess.subscribeSensors(this);
             if (mAuth != null && mAuth.getUid() != null)
                 DataAccess.subscribeUsersAtHome(this, mAuth.getUid());
         } else

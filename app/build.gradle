@@ -37,6 +37,13 @@ dependencies {
     implementation 'com.google.android.gms:play-services-awareness:11.8.0'
     implementation 'com.google.android.gms:play-services-auth:11.8.0'
     implementation 'com.google.firebase:firebase-messaging:11.8.0'
+    implementation "android.arch.lifecycle:extensions:1.1.0"
+    annotationProcessor "android.arch.lifecycle:compiler:1.1.0"
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
+
+    // Paging
+    implementation "android.arch.paging:runtime:1.0.0-alpha5"
     implementation 'net.danlew:android.joda:2.9.9'
     compile('com.crashlytics.sdk.android:crashlytics:2.9.0@aar') {
         transitive = true
