@@ -241,14 +241,7 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
         }
 
         Intent intent = new Intent(getApplicationContext(), GeofenceTransitionReceiver.class);
-
         mGeofencePendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-//        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-//        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-//        // calling addGeofences() and removeGeofences().
-//        mGeofencePendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.
-//                FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
     }
 
@@ -268,63 +261,22 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
     protected void onResume()
     {
         super.onResume();
-        //loadSensors();
-    }
-
-    private void loadSensors()
-    {
-        if (mAccount != null)
-        {
-            DataAccess.getSensors(this);
-        }
     }
 
     private FirebaseAuth mAuth;
 
     private void updateUI(GoogleSignInAccount account)
     {
-        MyHubViewModel viewModel = ViewModelProviders.of(this).get(MyHubViewModel.class);
-        LiveData<DataSnapshot> liveData = viewModel.getDataSnapshotLiveData();
-
-        liveData.observe(this, new Observer<DataSnapshot>()
-        {
+        final MyHubViewModel viewModel = ViewModelProviders.of(this).get(MyHubViewModel.class);
+        LiveData<List<Sensor>> sensorLiveData = viewModel.getSensorLiveData();
+        sensorLiveData.observe(this, new Observer<List<Sensor>>() {
             @Override
-            public void onChanged(@Nullable DataSnapshot dataSnapshot)
-            {
-                if (dataSnapshot != null)
-                {
-                    final List<Sensor> sensors = new ArrayList<>();
-
-                    if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0)
-                    {
-                        for (DataSnapshot sensorSnapshot : dataSnapshot.getChildren())
-                        {
-                            Sensor sensor = sensorSnapshot.getValue(Sensor.class);
-                            sensor.id = sensorSnapshot.getKey();
-                            sensors.add(sensor);
-                        }
-
-                        RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
-                        SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
-                        recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
-                    }
-                }
+            public void onChanged(@Nullable List<Sensor> sensors) {
+                RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
+                SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
+                recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
             }
         });
-//        model.getSensors().observe(this, new Observer<List<Sensor>>()
-//        {
-//            @Override
-//            public void onChanged(@Nullable List<Sensor> sensors)
-//            {
-//                if(sensors == null)
-//                {
-//                    return;
-//                }
-//                RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
-//                SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
-//                recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
-//            }
-//        });
 
         SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
@@ -337,9 +289,7 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
             welcomeView.setText("Welcome " + account.getDisplayName());
             headerView.setVisibility(View.VISIBLE);
             sensorsList.setVisibility(View.VISIBLE);
-            //loadSensors();
             initGeoFence();
-//            DataAccess.subscribeSensors(this);
             if (mAuth != null && mAuth.getUid() != null)
                 DataAccess.subscribeUsersAtHome(this, mAuth.getUid());
         } else

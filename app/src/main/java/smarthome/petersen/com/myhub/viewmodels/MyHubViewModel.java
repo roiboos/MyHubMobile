@@ -1,15 +1,13 @@
 package smarthome.petersen.com.myhub.viewmodels;
 
+import android.arch.core.util.Function;
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 
 import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,49 +21,56 @@ import smarthome.petersen.com.myhub.datamodel.Sensor;
 
 public class MyHubViewModel extends ViewModel
 {
-    private MutableLiveData<List<Sensor>> _sensors;
-    private final FirebaseQueryLiveData _liveData = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("sensors"));
+    private FirebaseQueryLiveData _liveDataSensor = null;
+    private FirebaseQueryLiveData _liveDataAtHome = null;
 
-    public LiveData<List<Sensor>> getSensors() {
-        if (_sensors == null) {
-            _sensors= new MutableLiveData<>();
-            loadSensors();
+    public MyHubViewModel(String userid)
+    {
+        _liveDataSensor = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("sensors"));
+        _liveDataAtHome = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("users/" + userid + "/athome"));
+    }
+
+    private final LiveData<Boolean> _atHomeLiveData =
+            Transformations.map(_liveDataAtHome, new DeserializerAtHome());
+
+    private final LiveData<List<Sensor>> _sensorLiveData =
+            Transformations.map(_liveDataSensor, new DeserializerSensors());
+
+    private class DeserializerAtHome implements Function<DataSnapshot, Boolean> {
+        @Override
+        public Boolean apply(DataSnapshot dataSnapshot) {
+            return (boolean) dataSnapshot.getValue();
         }
-        return _sensors;
+    }
+
+    private class DeserializerSensors implements Function<DataSnapshot, List<Sensor>> {
+        @Override
+        public List<Sensor> apply(DataSnapshot dataSnapshot) {
+            final List<Sensor> sensors = new ArrayList<>();
+
+            if(dataSnapshot != null && dataSnapshot.getChildrenCount() > 0)
+            {
+                for (DataSnapshot sensorSnapshot : dataSnapshot.getChildren())
+                {
+                    Sensor sensor = sensorSnapshot.getValue(Sensor.class);
+                    sensor.id = sensorSnapshot.getKey();
+                    sensors.add(sensor);
+                }
+
+            }
+
+            return sensors;
+        }
     }
 
     @NonNull
-    public LiveData<DataSnapshot> getDataSnapshotLiveData() {
-        return _liveData;
+    public LiveData<List<Sensor>> getSensorLiveData() {
+        return _sensorLiveData;
     }
-    private void loadSensors() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference ref = database.getReference("sensors");
-        ref.addListenerForSingleValueEvent(new ValueEventListener()
-        {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot)
-            {
-                final List<Sensor> sensors = new ArrayList<Sensor>();
 
-                if(dataSnapshot != null && dataSnapshot.getChildrenCount() > 0)
-                {
-                    for (DataSnapshot sensorSnapshot : dataSnapshot.getChildren())
-                    {
-                        Sensor sensor = sensorSnapshot.getValue(Sensor.class);
-                        sensor.id = sensorSnapshot.getKey();
-                        sensors.add(sensor);
-                    }
-
-                    _sensors.postValue(sensors);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError)
-            {
-
-            }
-        });
+    @NonNull
+    public LiveData<Boolean> getAtHomeLiveData()
+    {
+        return _atHomeLiveData;
     }
 }
