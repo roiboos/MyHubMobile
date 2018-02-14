@@ -21,25 +21,20 @@ import smarthome.petersen.com.myhub.datamodel.Sensor;
 
 public class MyHubViewModel extends ViewModel
 {
-    private FirebaseQueryLiveData _liveDataSensor = null;
+    private FirebaseQueryLiveData _liveDataSensor = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("sensors"));;
+    private final LiveData<List<Sensor>> _sensorLiveData = Transformations.map(_liveDataSensor, new DeserializerSensors());
     private FirebaseQueryLiveData _liveDataAtHome = null;
+    private LiveData<Boolean> _atHomeLiveData = null;
 
     public MyHubViewModel(String userid)
     {
-        _liveDataSensor = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("sensors"));
-        _liveDataAtHome = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("users/" + userid + "/athome"));
+        _liveDataAtHome = new FirebaseQueryLiveData(FirebaseDatabase.getInstance().getReference("users/" + userid + "/athome"));;
+        _atHomeLiveData = Transformations.map(_liveDataAtHome, new DeserializerAtHome());
     }
-
-    private final LiveData<Boolean> _atHomeLiveData =
-            Transformations.map(_liveDataAtHome, new DeserializerAtHome());
-
-    private final LiveData<List<Sensor>> _sensorLiveData =
-            Transformations.map(_liveDataSensor, new DeserializerSensors());
-
     private class DeserializerAtHome implements Function<DataSnapshot, Boolean> {
         @Override
         public Boolean apply(DataSnapshot dataSnapshot) {
-            return (boolean) dataSnapshot.getValue();
+            return dataSnapshot != null ? dataSnapshot.getValue(Boolean.class) == true : false;
         }
     }
 

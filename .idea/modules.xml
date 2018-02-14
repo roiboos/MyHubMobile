@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/MyHub.iml" filepath="$PROJECT_DIR$/MyHub.iml" />
       <module fileurl="file://C:\Users\Chris\Development\Apps\MyHubMobile\MyHub.iml" filepath="C:\Users\Chris\Development\Apps\MyHubMobile\MyHub.iml" />
-      <module fileurl="file://$PROJECT_DIR$/MyHubMobile.iml" filepath="$PROJECT_DIR$/MyHubMobile.iml" />
+      <module fileurl="file://C:\Users\MULL12\Documents\MyHub\MyHubMobile.iml" filepath="C:\Users\MULL12\Documents\MyHub\MyHubMobile.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

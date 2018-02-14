@@ -53,20 +53,18 @@ import java.util.Map;
 
 import smarthome.petersen.com.myhub.adapters.SensorRecyclerAdapter;
 import smarthome.petersen.com.myhub.dataaccess.DataAccess;
-import smarthome.petersen.com.myhub.dataaccess.DataAccess.OnAtHomeChangedListener;
-import smarthome.petersen.com.myhub.dataaccess.DataAccess.OnSensorsReceivedListener;
 import smarthome.petersen.com.myhub.datamodel.Sensor;
 import smarthome.petersen.com.myhub.datamodel.User;
 import smarthome.petersen.com.myhub.receiver.GeofenceTransitionReceiver;
 import smarthome.petersen.com.myhub.services.FCMService;
-import smarthome.petersen.com.myhub.services.GeofenceTransitionsIntentService;
 import smarthome.petersen.com.myhub.viewmodels.MyHubViewModel;
+import smarthome.petersen.com.myhub.viewmodels.MyHubViewModelFactory;
 
 /**
  * Created by mull12 on 24.01.2018.
  */
 
-public class MainActivity extends AppCompatActivity implements OnSensorsReceivedListener, OnAtHomeChangedListener
+public class MainActivity extends AppCompatActivity
 {
     private static final double LONGITUDE_HOME = 12.183270;
     private static final double LATITUDE_HOME = 49.032820;
@@ -267,16 +265,41 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
 
     private void updateUI(GoogleSignInAccount account)
     {
-        final MyHubViewModel viewModel = ViewModelProviders.of(this).get(MyHubViewModel.class);
-        LiveData<List<Sensor>> sensorLiveData = viewModel.getSensorLiveData();
-        sensorLiveData.observe(this, new Observer<List<Sensor>>() {
-            @Override
-            public void onChanged(@Nullable List<Sensor> sensors) {
-                RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
-                SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
-                recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
-            }
-        });
+        if(account != null)
+        {
+            MyHubViewModelFactory myHubViewModelFactory = new MyHubViewModelFactory(mAuth != null ? mAuth.getUid() : null);
+            final MyHubViewModel viewModel = ViewModelProviders.of(this, myHubViewModelFactory).get(MyHubViewModel.class);
+            LiveData<List<Sensor>> sensorLiveData = viewModel.getSensorLiveData();
+            sensorLiveData.observe(this, new Observer<List<Sensor>>()
+            {
+                @Override
+                public void onChanged(@Nullable List<Sensor> sensors)
+                {
+                    RecyclerView recyclerViewSensors = findViewById(R.id.recyclerViewSensors);
+                    SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
+                    recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
+                }
+            });
+
+            LiveData<Boolean> atHomeLiveData = viewModel.getAtHomeLiveData();
+            atHomeLiveData.observe(this, new Observer<Boolean>()
+            {
+                @Override
+                public void onChanged(@Nullable Boolean atHome)
+                {
+                    TextView atHomeView = findViewById(R.id.textViewAtHome);
+                    if (atHome != null && atHome)
+                    {
+                        atHomeView.setText(R.string.athome);
+                        atHomeView.setVisibility(View.VISIBLE);
+                    } else
+                    {
+                        atHomeView.setText("");
+                        atHomeView.setVisibility(View.GONE);
+                    }
+                }
+            });
+        }
 
         SignInButton signInButton = findViewById(R.id.btnSignIn);
         TextView welcomeView = findViewById(R.id.textViewWelcome);
@@ -290,8 +313,6 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
             headerView.setVisibility(View.VISIBLE);
             sensorsList.setVisibility(View.VISIBLE);
             initGeoFence();
-            if (mAuth != null && mAuth.getUid() != null)
-                DataAccess.subscribeUsersAtHome(this, mAuth.getUid());
         } else
         {
             mAccount = null;
@@ -374,30 +395,6 @@ public class MainActivity extends AppCompatActivity implements OnSensorsReceived
     @Override
     protected void onDestroy()
     {
-        DataAccess.unsubscribe();
         super.onDestroy();
-    }
-
-    @Override
-    public void onSensorsReceived(List<Sensor> sensors)
-    {
-        RecyclerView recyclerViewSensors = (RecyclerView) findViewById(R.id.recyclerViewSensors);
-        SensorRecyclerAdapter sensorRecyclerAdapter = new SensorRecyclerAdapter(MainActivity.this, sensors);
-        recyclerViewSensors.setAdapter(sensorRecyclerAdapter);
-    }
-
-    @Override
-    public void onAtHomeChanged(boolean atHome)
-    {
-        TextView atHomeView = findViewById(R.id.textViewAtHome);
-        if (atHome)
-        {
-            atHomeView.setText(R.string.athome);
-            atHomeView.setVisibility(View.VISIBLE);
-        } else
-        {
-            atHomeView.setText("");
-            atHomeView.setVisibility(View.GONE);
-        }
     }
 }
