@@ -16,18 +16,22 @@ public class User
     public String key;
     public String email;
     public List<String> registration_ids;
+    public boolean athome;
 
     public User()
     {
 
     }
 
+
     public Map<String,Object> toMap()
     {
         Map<String, Object> result = new HashMap<String, Object>();
         //result.put("uid", Uid);
         result.put("email", email);
-        result.put("registration_ids", registration_ids);
+        result.put("athome", athome);
+        if(registration_ids != null && registration_ids.size() > 0)
+            result.put("registration_ids", registration_ids);
 
         return result;
     }

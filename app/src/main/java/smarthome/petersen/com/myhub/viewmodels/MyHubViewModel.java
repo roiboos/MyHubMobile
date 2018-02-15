@@ -34,7 +34,7 @@ public class MyHubViewModel extends ViewModel
     private class DeserializerAtHome implements Function<DataSnapshot, Boolean> {
         @Override
         public Boolean apply(DataSnapshot dataSnapshot) {
-            return dataSnapshot != null ? dataSnapshot.getValue(Boolean.class) == true : false;
+            return dataSnapshot != null ? dataSnapshot.getValue(Boolean.class) != null && dataSnapshot.getValue(Boolean.class) == true : false;
         }
     }
 

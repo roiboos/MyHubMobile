@@ -107,14 +107,6 @@ public class MainActivity extends AppCompatActivity
         if (user != null)
         {
             Global.setCurrentUserid(mAuth.getUid());
-            try
-            {
-                DataAccess.setAtHome(false, mAuth.getUid());
-            }
-            catch (Exception ex)
-            {
-                Log.e("MainActivity", Global.getExceptionString(ex));
-            }
         }
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
@@ -348,7 +340,6 @@ public class MainActivity extends AppCompatActivity
         try
         {
             GoogleSignInAccount account = task.getResult(ApiException.class);
-            updateUI(account);
             handleFirebaseSignIn(account);
         }
         catch (ApiException e)
@@ -360,7 +351,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void handleFirebaseSignIn(GoogleSignInAccount account)
+    private void handleFirebaseSignIn(final GoogleSignInAccount account)
     {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         mAuth.signInWithCredential(credential)
@@ -378,11 +369,12 @@ public class MainActivity extends AppCompatActivity
                             DatabaseReference ref = database.getReference("users/" + firebaseUser.getUid());
                             User user = new User();
                             user.email = firebaseUser.getEmail();
-                            user.registration_ids = new ArrayList<String>();
+                            //user.registration_ids = new ArrayList<String>();
                             Map<String, Object> userValues = user.toMap();
                             ref.updateChildren(userValues);
                             String registrationToken = FirebaseInstanceId.getInstance().getToken();
                             FCMService.sendRegistrationToServer(registrationToken);
+                            updateUI(account);
                         } else
                         {
                             // If sign in fails, display a message to the user.
