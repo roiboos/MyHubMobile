@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="20dp"
+    android:background="#FFF0F0F0"
     tools:context="smarthome.petersen.com.myhub.MainActivity">
 
     <com.google.android.gms.common.SignInButton
@@ -31,23 +31,15 @@
         >
 
         <TextView
-            android:id="@+id/textViewWelcome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Servus"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
-
-        <TextView
             android:id="@+id/textViewAtHome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Zuhause"
             android:visibility="gone"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textViewWelcome"/>
+            app:layout_constraintTop_toTopOf="parent"/>
 
+<!--
         <Button
             android:id="@+id/btnSignOut"
             android:layout_marginTop="10dp"
@@ -63,9 +55,11 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             />
+-->
     </android.support.constraint.ConstraintLayout>
 
 
+<!--
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="2dp"
@@ -74,6 +68,7 @@
         android:layout_marginRight="10dp"
         android:layout_marginBottom="20dp"
         android:background="@android:color/darker_gray"/>
+-->
 
 
     <android.support.v7.widget.RecyclerView
@@ -85,7 +80,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:visibility="visible"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="10dp"
         android:padding="10dp"
         >
     </android.support.v7.widget.RecyclerView>

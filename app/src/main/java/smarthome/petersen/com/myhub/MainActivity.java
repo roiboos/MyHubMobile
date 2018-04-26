@@ -110,18 +110,18 @@ public class MainActivity extends AppCompatActivity
         }
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        Button signOutButton = findViewById(R.id.btnSignOut);
-        signOutButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                mAuth.signOut();
-                Global.setCurrentUserid(null);
-                mGoogleSignInClient.signOut();
-                updateUI(null);
-            }
-        });
+//        Button signOutButton = findViewById(R.id.btnSignOut);
+//        signOutButton.setOnClickListener(new View.OnClickListener()
+//        {
+//            @Override
+//            public void onClick(View view)
+//            {
+//                mAuth.signOut();
+//                Global.setCurrentUserid(null);
+//                mGoogleSignInClient.signOut();
+//                updateUI(null);
+//            }
+//        });
 
         if (account == null)
         {
@@ -294,14 +294,14 @@ public class MainActivity extends AppCompatActivity
         }
 
         SignInButton signInButton = findViewById(R.id.btnSignIn);
-        TextView welcomeView = findViewById(R.id.textViewWelcome);
+        //TextView welcomeView = findViewById(R.id.textViewWelcome);
         View headerView = findViewById(R.id.flHeader);
         View sensorsList = findViewById(R.id.recyclerViewSensors);
         if (account != null)
         {
             mAccount = account;
             signInButton.setVisibility(View.GONE);
-            welcomeView.setText("Welcome " + account.getDisplayName());
+            //welcomeView.setText("Welcome " + account.getDisplayName());
             headerView.setVisibility(View.VISIBLE);
             sensorsList.setVisibility(View.VISIBLE);
             initGeoFence();
