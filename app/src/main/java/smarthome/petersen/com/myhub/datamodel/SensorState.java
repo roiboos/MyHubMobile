@@ -13,4 +13,6 @@ public class SensorState
     public boolean presence;
 
     public String lastupdated;
+
+    public boolean reachable;
 }

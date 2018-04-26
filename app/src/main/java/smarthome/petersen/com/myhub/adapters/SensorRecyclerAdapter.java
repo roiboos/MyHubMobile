@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.joda.time.DateTime;
@@ -63,16 +64,19 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
         holder.textViewSensorName.setText(sensor.name);
 
         String sensorState = "Unknown";
+        int sensorIconId = R.drawable.ic_questionmark;
 
         DateTimeFormatter formatterIn = ISODateTimeFormat.dateTimeParser().withZone(DateTimeZone.forID("UTC")); //.withZone(DateTimeZone.getDefault());
-        DateTime lastupdated = formatterIn.parseDateTime(sensor.state.lastupdated);
-        String lastupdatedString = lastupdated.withZone(DateTimeZone.getDefault()).toString("dd.MM.yyyy HH:mm:ss");
+        DateTime lastupdated = formatterIn.parseDateTime(sensor.state.lastupdated).withZone(DateTimeZone.getDefault());
+        String lastupdatedString = lastupdated.toString("dd.MM.yyyy HH:mm:ss");
 
         if(Sensor.SENSOR_TYPE_MOTION.equalsIgnoreCase(sensor.type))
         {
             try
             {
                 sensorState = lastupdatedString;
+                DateTime now = DateTime.now();
+                sensorIconId = (now.getMillis() - lastupdated.getMillis() < 10*60*1000) ? R.drawable.ic_walking : R.drawable.ic_walking_grey;
             }
             catch (Exception ex)
             {
@@ -84,16 +88,24 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
             if(lastupdated.year().get() < 2000)
             {
                 sensorState = "Unknown";
+                sensorIconId = R.drawable.ic_questionmark;
             }
             else
             {
                 sensorState = sensor.state.open ? "Offen" : "Geschlossen";
+                sensorIconId = sensor.state.open ? R.drawable.ic_window_open : R.drawable.ic_window_closed;
             }
+        }
+
+        if(!sensor.state.reachable)
+        {
+            sensorState = "Offline";
         }
 
         int standardColor = holder.textViewSensorName.getCurrentTextColor();
         holder.textViewSensorState.setTextColor(Sensor.SENSOR_TYPE_OPENCLOSE.equalsIgnoreCase(sensor.type) && sensor.state.open ? Color.RED : standardColor);
         holder.textViewSensorState.setText(sensorState);
+        if(sensorIconId > 0) holder.imgViewSensorIcon.setImageResource(sensorIconId);
     }
 
     @Override
@@ -106,6 +118,7 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
     {
         public TextView textViewSensorName;
         public TextView textViewSensorState;
+        public ImageView imgViewSensorIcon;
 
         public ViewHolder(View itemView)
         {
@@ -119,6 +132,7 @@ public class SensorRecyclerAdapter extends RecyclerView.Adapter<SensorRecyclerAd
 
                 }
             });
+            imgViewSensorIcon = itemView.findViewById(R.id.imgSensorIcon);
             textViewSensorName = (TextView) itemView.findViewById(R.id.textViewSensorName);
             textViewSensorState = (TextView) itemView.findViewById(R.id.textViewSensorState);
         }

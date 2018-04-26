@@ -16,13 +16,20 @@
         android:padding="10dp"
         >
 
+        <ImageView
+            android:id="@+id/imgSensorIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp" android:src="@drawable/ic_window_open"
+            app:layout_constraintStart_toStartOf="parent"/>
+
         <TextView
             android:id="@+id/textViewSensorName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Fenster WC Gast"
+            android:layout_marginLeft="10dp"
             app:layout_constraintBaseline_toBaselineOf="@+id/textViewSensorState"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toEndOf="@id/imgSensorIcon"/>
 
         <TextView
             android:id="@+id/textViewSensorState"

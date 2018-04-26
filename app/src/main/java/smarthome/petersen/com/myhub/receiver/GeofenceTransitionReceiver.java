@@ -43,7 +43,6 @@ public class GeofenceTransitionReceiver extends BroadcastReceiver
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
             Log.d(TAG, "Geofence action " + geofenceTransition);
-            Global.notifyUser(context, "Geofence", "At home " + (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ? "yes" : "no"));
             try
             {
                 String currentUserid = Global.getCurrentUserid();
